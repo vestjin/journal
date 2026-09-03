@@ -1,0 +1,1 @@
+发布流程不变：复制模板 → 填内容 → `entries.txt` 顶上加日期 → `feed.xml` 加条目 → commit 推送。
