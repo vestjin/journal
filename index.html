@@ -9,6 +9,7 @@
 <style>
   :root {
     --paper: #f7f3e8;
+    --page: #fcf9f1;
     --paper-deep: #efe9d8;
     --ink: #2f2a24;
     --ink-2: #6b6355;
@@ -105,7 +106,6 @@
     border-bottom: 1px dashed var(--rule);
     text-decoration: none;
     color: var(--ink);
-    transition: background .15s;
   }
   .entry:hover .entry-title { color: var(--seal); }
   .entry:hover .entry-date { color: var(--seal); }
@@ -156,7 +156,7 @@
     font-size: 13px;
     color: var(--ink-2);
     text-decoration: none;
-    margin-bottom: 34px;
+    margin-bottom: 30px;
     letter-spacing: .08em;
   }
   .back:hover { color: var(--seal); }
@@ -165,7 +165,7 @@
   article.post { animation: fadein .3s ease; }
   @keyframes fadein { from { opacity: 0; transform: translateY(6px); } }
 
-  .post-head { margin-bottom: 36px; }
+  .post-head { margin-bottom: 30px; }
   .post-date {
     font-size: 13px;
     color: var(--seal);
@@ -177,47 +177,81 @@
     line-height: 1.4;
     margin-top: 8px;
   }
-  .post-rule {
-    margin-top: 18px;
-    height: 3px;
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
-  }
 
-  /* ===== 正文排版（方案 A，修正版） ===== */
-  .post-body { font-size: 16px; }
-  .post-body > * { margin-bottom: 1.1em; }
+  /* ===== 正文：书页卡片 ===== */
+  .post-body {
+    font-size: 16px;
+    background: var(--page);
+    border: 1px solid var(--rule);
+    outline: 1px solid var(--rule);
+    outline-offset: 5px;
+    padding: clamp(26px, 6vw, 46px) clamp(22px, 6vw, 42px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.7) inset,
+      0 14px 34px -20px rgba(70, 55, 32, .45);
+  }
+  .post-body > * { margin-bottom: 1.05em; }
   .post-body > *:last-child { margin-bottom: 0; }
 
-  /* 段落：首行缩进两字 + 中文两端对齐 */
+  /* 段落：首行缩进 + 两端对齐；开场段首字下沉 */
   .post-body p {
     text-indent: 2em;
     text-align: justify;
     text-justify: inter-ideograph;
   }
   .post-body p:first-child,
-  .post-body p:has(> img),
-  .post-body img { text-indent: 0; }
-  .post-body p img { display: inline-block; }
+  .post-body p:has(> img) { text-indent: 0; }
+  .post-body > p:first-child::first-letter {
+    float: left;
+    font-size: 2.5em;
+    line-height: 1;
+    font-weight: 900;
+    color: var(--seal);
+    padding: .04em .1em 0 0;
+  }
+  .post-body > p:first-child:has(img)::first-letter,
+  .post-body > p:has(> a:first-child)::first-letter { all: revert; }
 
-  /* 标题：仅朱砂侧线，无序号 */
+  /* h2：居中 + 两侧双边饰线 */
   .post-body h2 {
-    font-size: 18.5px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 17px;
     font-weight: 700;
-    margin: 1.8em 0 .9em;
-    padding-left: 12px;
-    border-left: 3px solid var(--seal);
-    line-height: 1.5;
+    letter-spacing: .18em;
+    margin: 2em 0 1em;
+    text-indent: 0;
   }
-  .post-body h2:first-child { margin-top: .4em; }
-  .post-body h3 {
-    font-size: 16.5px;
-    font-weight: 700;
-    margin: 1.5em 0 .8em;
+  .post-body h2:first-child { margin-top: .3em; }
+  .post-body h2::before,
+  .post-body h2::after {
+    content: '';
+    flex: 1;
+    height: 3px;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
   }
 
-  /* 列表：朱砂菱形符号 */
-  .post-body ol { padding-left: 1.5em; }
+  /* h3：行首朱砂菱形 */
+  .post-body h3 {
+    position: relative;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    margin: 1.6em 0 .8em;
+    padding-left: 18px;
+  }
+  .post-body h3::before {
+    content: '';
+    position: absolute;
+    left: 0; top: .55em;
+    width: 7px; height: 7px;
+    transform: rotate(45deg);
+    background: var(--seal);
+  }
+
+  /* 列表：无序朱砂菱形 / 有序中文数字 */
   .post-body ul {
     padding-left: 1.55em;
     list-style: none;
@@ -233,40 +267,62 @@
     background: var(--seal);
     opacity: .55;
   }
+  .post-body ol {
+    padding-left: 2.3em;
+    list-style: cjk-ideographic;
+  }
   .post-body li {
     margin-bottom: .45em;
     text-indent: 0;
     text-align: left;
   }
   .post-body li:last-child { margin-bottom: 0; }
+  .post-body ol li::marker {
+    color: var(--seal);
+    font-weight: 700;
+  }
 
-  /* 引用块：横向渐变 + 竖排「题记」 */
+  /* 强调：着重号（中文式点标注） */
+  .post-body em {
+    font-style: normal;
+    text-emphasis: filled circle var(--seal);
+    -webkit-text-emphasis: filled circle var(--seal);
+    text-emphasis-position: under right;
+    -webkit-text-emphasis-position: under right;
+  }
+  .post-body strong { font-weight: 700; color: var(--ink); }
+
+  /* 引用：「」角标引文 */
   .post-body blockquote {
     position: relative;
-    max-width: 90%;
-    margin: 1.3em auto;
-    padding: 10px 22px 10px 20px;
-    border-left: 2px solid var(--seal);
+    max-width: 88%;
+    margin: 1.4em auto;
+    padding: 8px 26px;
     color: var(--ink-2);
-    background: linear-gradient(90deg, var(--paper-deep), rgba(239,233,216,0) 80%);
+    text-align: center;
+  }
+  .post-body blockquote::before {
+    content: '「';
+    position: absolute;
+    left: 0; top: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--seal);
+  }
+  .post-body blockquote::after {
+    content: '」';
+    position: absolute;
+    right: 0; bottom: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--seal);
   }
   .post-body blockquote p {
     text-indent: 0;
-    text-align: left;
+    text-align: center;
     margin-bottom: .3em;
   }
   .post-body blockquote p:last-child { margin-bottom: 0; }
-  .post-body blockquote::after {
-    content: '题记';
-    writing-mode: vertical-rl;
-    position: absolute;
-    right: 4px; top: 10px;
-    font-size: 10px;
-    line-height: 1;
-    letter-spacing: .4em;
-    color: var(--seal);
-    opacity: .55;
-  }
 
   /* 链接、图片、代码 */
   .post-body a {
@@ -279,10 +335,11 @@
   .post-body a:hover { border-color: var(--seal); }
   .post-body img {
     max-width: 100%;
-    border-radius: 8px;
-    border: 1px solid var(--rule);
     display: block;
     margin: 1.4em auto;
+    border: 8px solid #fff;
+    outline: 1px solid var(--rule);
+    box-shadow: 0 8px 20px -12px rgba(70, 55, 32, .5);
   }
   .post-body p:has(> img:only-child) { text-align: center; }
   .post-body code {
@@ -297,18 +354,27 @@
     background: #2c2820;
     color: #e9e2d0;
     padding: 16px 18px;
-    border-radius: 8px;
+    border-radius: 6px;
     overflow-x: auto;
     line-height: 1.6;
     font-size: 13.5px;
   }
   .post-body pre code { background: none; padding: 0; color: inherit; }
+
+  /* hr：居中花饰 */
   .post-body hr {
     border: none;
-    height: 3px;
-    border-top: 1px solid var(--rule);
-    border-bottom: 1px solid var(--rule);
+    height: auto;
     margin: 2.2em 0;
+    text-align: center;
+  }
+  .post-body hr::after {
+    content: '❦';
+    display: block;
+    color: var(--seal);
+    opacity: .55;
+    font-size: 15px;
+    line-height: 1;
   }
   .post-body del { color: var(--ink-3); }
 
@@ -320,7 +386,7 @@
     color: var(--ink-3);
     font-size: 13px;
     text-align: center;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   /* Lightbox */
@@ -340,8 +406,8 @@
   }
 
   .post-nav {
-    margin-top: 56px;
-    padding-top: 24px;
+    margin-top: 44px;
+    padding-top: 22px;
     border-top: 1px solid var(--rule);
     display: flex;
     justify-content: space-between;
@@ -384,8 +450,7 @@
     .post-nav { flex-direction: column; }
     .post-nav a { max-width: 100%; }
     .post-nav .next { text-align: left; margin-left: 0; }
-    .post-body blockquote { max-width: 100%; }
-    .post-body blockquote::after { right: 2px; }
+    .post-body blockquote { max-width: 100%; padding: 8px 22px; }
   }
 </style>
 </head>
@@ -511,7 +576,6 @@ function parseEntry(id, raw, idx) {
   let title = '无题', start = 0;
   const m = lines[0] && lines[0].match(/^#\s+(.*)/);
   if (m) { title = m[1].trim(); start = 1; }
-  /* 正文从标题之后开始：md 首行标题只显示在页头，不进正文，避免重复 */
   const body = lines.slice(start).join('\n').replace(/^\s+/, '');
 
   let excerpt = '';
@@ -581,7 +645,6 @@ function showPost(id) {
       '<div class="post-head">' +
         '<div class="post-date">' + e.no + ' · ' + fmtDateFull(e.date) + '</div>' +
         '<h1 class="post-title">' + esc(e.title) + '</h1>' +
-        '<div class="post-rule"></div>' +
       '</div>' +
       '<div class="post-body">' + renderMD(e.body) + '</div>' +
       '<nav class="post-nav">' +
