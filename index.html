@@ -252,11 +252,17 @@
   }
 
   /* 列表：无序朱砂菱形 / 有序中文数字 */
+  /* 1. ul 的缩进减小——缩进改由 li 自己出 */
   .post-body ul {
-    padding-left: 1.55em;
+    padding-left: .2em;        /* 原 1.55em，改为极小值 */
     list-style: none;
   }
-  .post-body ul > li { position: relative; }
+
+  /* 2. li 自己留出菱形的位置 */
+  .post-body ul > li {
+    position: relative;
+    padding-left: 1.35em;    
+  }
   .post-body ul > li::before {
     content: '';
     position: absolute;
