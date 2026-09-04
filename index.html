@@ -139,6 +139,51 @@
     -webkit-line-clamp: 2;
     overflow: hidden;
   }
+  /* ===== 最新一期高亮 ===== */
+  .entry-latest {
+    background: var(--page);
+    border: 1px solid var(--rule);
+    outline: 1px solid var(--rule);
+    outline-offset: 4px;
+    padding: 24px 18px 22px;
+    margin-bottom: 12px;
+    box-shadow: 0 10px 26px -18px rgba(70, 55, 32, .45);
+  }
+  .entry-latest .entry-title { color: var(--seal); }
+  .badge-new {
+    display: inline-block;
+    font-size: 10.5px;
+    letter-spacing: .18em;
+    color: var(--seal);
+    border: 1px solid var(--seal);
+    border-radius: 2px;
+    padding: 1px 6px 1px 8px;
+    margin-left: 10px;
+    vertical-align: 2px;
+  }
+
+  /* ===== 分页 ===== */
+  .pager {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 18px;
+    margin-top: 30px;
+  }
+  .pager button {
+    font-family: var(--serif);
+    font-size: 13.5px;
+    color: var(--ink-2);
+    background: none;
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 6px 16px;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .pager button:hover:not(:disabled) { color: var(--seal); border-color: var(--seal); }
+  .pager button:disabled { opacity: .35; cursor: default; }
+  .pg-info { color: var(--ink-3); font-size: 12.5px; letter-spacing: .1em; }
 
   .empty {
     display: none;
@@ -251,17 +296,40 @@
     background: var(--seal);
   }
 
-  /* 列表：无序朱砂菱形 / 有序中文数字 */
-  /* 1. ul 的缩进减小——缩进改由 li 自己出 */
-  .post-body ul {
-    padding-left: .2em;        /* 原 1.55em，改为极小值 */
-    list-style: none;
+  /* ★ 新增 h4：细虚线下划 + 行首小圆点 */
+  .post-body h4 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .05em;
+    color: var(--ink);
+    margin: 1.4em 0 .7em;
+    padding-bottom: .35em;
+    border-bottom: 1px dashed var(--rule);
+  }
+  .post-body h4::before {
+    content: '';
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--seal);
+    opacity: .65;
+    margin-right: .55em;
+    vertical-align: 2px;
   }
 
-  /* 2. li 自己留出菱形的位置 */
+  /* ==========================================================
+     列表体系（纯 CSS）
+     —— 一级是墨，二级是铅笔 ——
+     ========================================================== */
+
+  /* ul 基础：缩进由 li 自己出 */
+  .post-body ul {
+    padding-left: .2em;
+    list-style: none;
+  }
   .post-body ul > li {
     position: relative;
-    padding-left: 1.35em;    
+    padding-left: 1.35em;
   }
   .post-body ul > li::before {
     content: '';
@@ -273,20 +341,97 @@
     background: var(--seal);
     opacity: .55;
   }
+
+  /* ol 基础：中文数字 */
   .post-body ol {
     padding-left: 2.3em;
     list-style: cjk-ideographic;
   }
+  .post-body ol li::marker {
+    color: var(--seal);
+    font-weight: 700;
+  }
+
+  /* li 基础 */
   .post-body li {
     margin-bottom: .45em;
     text-indent: 0;
     text-align: left;
   }
   .post-body li:last-child { margin-bottom: 0; }
-  .post-body ol li::marker {
-    color: var(--seal);
-    font-weight: 700;
+
+  /* ★ 核心新增：带链接的条目（即「- [标题](url) — 一句短评」）
+     用 :has 识别，整条进入「短评体」：淡墨、略小
+     链接（标题）则回到墨色、加粗、铅笔细线
+     —— 短评部分因为继承 li 的样式，自动变淡变小，无需 JS */
+  .post-body li:has(> a:first-child) {
+    color: var(--ink-2);
+    font-size: .93em;
+    line-height: 1.7;
   }
+  .post-body li:has(> a:first-child) > a:first-child {
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 1.08em;               /* 抵消 li 的缩小，回到正文级 */
+    border-bottom: 1px solid var(--rule);
+    transition: color .15s, border-color .15s;
+  }
+  .post-body li:has(> a:first-child) > a:first-child:hover {
+    color: var(--seal);
+    border-bottom-color: var(--seal-soft);
+  }
+  /* 兼容不支持 :has 的浏览器：至少让 li 里第一个链接有标题感 */
+  @supports not (selector(:has(*))) {
+    .post-body li > a:first-child {
+      font-weight: 700;
+      border-bottom: 1px solid var(--rule);
+    }
+  }
+
+  /* ★ 嵌套子列表：虚线导轨 + 更小菱形 + 更淡文字（纯 CSS 二级内容） */
+  .post-body ul ul,
+  .post-body ol ul {
+    list-style: none;
+    margin: .4em 0 .15em;
+    padding-left: 1.15em;
+    margin-left: .55em;
+    border-left: 1px dashed var(--rule);
+  }
+  .post-body ul ul > li,
+  .post-body ol ul > li {
+    position: relative;
+    padding-left: 1.2em;
+    font-size: .94em;
+    color: var(--ink-3);
+  }
+  .post-body ul ul > li::before,
+  .post-body ol ul > li::before {
+    content: '';
+    position: absolute;
+    left: 0; top: .82em;
+    width: 4px; height: 4px;
+    border-radius: 1px;
+    transform: rotate(45deg);
+    background: var(--seal);
+    opacity: .35;
+  }
+  /* 子列表里的链接：淡红，不打断二级的弱化层级 */
+  .post-body ul ul > li a,
+  .post-body ol ul > li a {
+    color: var(--ink-2);
+    font-weight: 400;
+    border-bottom: 1px solid var(--rule);
+  }
+  /* 嵌套有序子列表：普通阿拉伯数字，与主列表的中文数字区分 */
+  .post-body ul ol,
+  .post-body ol ol {
+    list-style: decimal;
+    font-size: .94em;
+    color: var(--ink-2);
+    margin: .4em 0 .15em;
+    padding-left: 1.8em;
+  }
+  .post-body ul ol li::marker { font-weight: 400; opacity: .8; }
 
   /* 强调：着重号（中文式点标注） */
   .post-body em {
@@ -297,6 +442,27 @@
     -webkit-text-emphasis-position: under right;
   }
   .post-body strong { font-weight: 700; color: var(--ink); }
+
+  /* ★ 新增 mark：荧光笔划过 */
+  .post-body mark {
+    background: linear-gradient(to top,
+      rgba(214, 178, 90, .45) 45%, transparent 45%);
+    color: inherit;
+    padding: 0 .1em;
+  }
+
+  /* ★ 新增 kbd：按键 */
+  .post-body kbd {
+    font-family: ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: .82em;
+    color: var(--ink-2);
+    background: var(--page);
+    border: 1px solid var(--rule);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin: 0 .15em;
+  }
 
   /* 引用：「」角标引文 */
   .post-body blockquote {
@@ -366,6 +532,80 @@
     font-size: 13.5px;
   }
   .post-body pre code { background: none; padding: 0; color: inherit; }
+
+  /* ★ 新增 表格：纸面账目风 */
+  .post-body table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .92em;
+    margin: 1.4em 0;
+  }
+  .post-body th {
+    font-weight: 700;
+    text-align: left;
+    color: var(--ink);
+    border-bottom: 2px solid var(--rule);
+    padding: .5em .7em;
+    letter-spacing: .05em;
+  }
+  .post-body td {
+    color: var(--ink-2);
+    border-bottom: 1px dashed var(--rule);
+    padding: .5em .7em;
+  }
+  .post-body tr:last-child td { border-bottom: none; }
+  .post-body tbody tr:hover td { background: var(--paper-deep); }
+
+  /* ★ 新增 图注 figure / figcaption */
+  .post-body figure { margin: 1.6em 0; }
+  .post-body figure img { margin: 0 auto; }
+  .post-body figcaption {
+    margin-top: .7em;
+    text-align: center;
+    font-size: 12.5px;
+    color: var(--ink-3);
+    letter-spacing: .1em;
+    text-indent: 0;
+  }
+  .post-body figcaption::before { content: "◈ "; color: var(--seal); opacity: .55; }
+
+  /* ★ 新增 脚注区（Markdown 渲染器输出的 .footnotes） */
+  .post-body .footnotes {
+    margin-top: 2.2em;
+    padding-top: 1em;
+    border-top: 1px dashed var(--rule);
+    font-size: .86em;
+    color: var(--ink-2);
+  }
+  .post-body .footnotes h2,
+  .post-body .footnotes h3 { font-size: .9em; margin: .4em 0 .6em; }
+  .post-body sup a { font-size: .8em; border-bottom: none; }
+  .post-body li:target,
+  .post-body p:target { background: var(--seal-soft); border-radius: 3px; }
+
+  /* ★ 新增 折叠块 details / summary */
+  .post-body details {
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: .6em 1em;
+    background: var(--paper-deep);
+  }
+  .post-body summary {
+    cursor: pointer;
+    font-weight: 700;
+    font-size: .94em;
+    color: var(--ink);
+    letter-spacing: .04em;
+  }
+  .post-body summary:hover { color: var(--seal); }
+  .post-body details[open] summary { margin-bottom: .5em; }
+  .post-body details > *:last-child { margin-bottom: 0; }
+
+  /* ★ 新增 任务清单：勾选框换成朱砂色 */
+  .post-body input[type="checkbox"] { accent-color: var(--seal); margin-right: .45em; }
+  .post-body li:has(> input[type="checkbox"]) { list-style: none; }
+  .post-body li:has(> input[type="checkbox"])::before { content: none; }
+  .post-body li:has(> input[type="checkbox"]) { padding-left: .2em; }
 
   /* hr：居中花饰 */
   .post-body hr {
@@ -459,6 +699,7 @@
     .post-body blockquote { max-width: 100%; padding: 8px 22px; }
   }
 </style>
+
 </head>
 <body>
 <div class="wrap" id="app">
@@ -491,6 +732,7 @@ const FENCE = '\u0060\u0060\u0060';
 
 const $ = id => document.getElementById(id);
 let entries = [];
+const PAGE_SIZE = 5;
 let byId = {};
 
 function esc(s) {
@@ -592,7 +834,7 @@ function parseEntry(id, raw, idx) {
     excerpt = t.replace(/^>\s?/, '').replace(/[*`>~\[\]!]/g, '').slice(0, 90);
     break;
   }
-  return { id, title, excerpt, date: id, no: '第 ' + String(idx + 1) + ' 期', body: body };
+  return { id, title, excerpt, date: id, no: '第 ' + String(idx) + ' 期', body: body };
 }
 
 function fmtDate(id) {
@@ -603,11 +845,19 @@ function fmtDateFull(id) {
   return id.replace(/-/g, ' · ');
 }
 
-function showIndex(kw) {
+function showIndex(kw, page) {
   kw = (kw || '').trim().toLowerCase();
+  page = page || 1;
+
   const shown = kw
     ? entries.filter(e => (e.title + ' ' + e.excerpt + ' ' + e.body).toLowerCase().includes(kw))
     : entries;
+
+  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  page = Math.min(Math.max(1, page), totalPages);
+
+  const start = (page - 1) * PAGE_SIZE;
+  const slice = shown.slice(start, start + PAGE_SIZE);
 
   let html =
     '<div class="search">' +
@@ -616,23 +866,54 @@ function showIndex(kw) {
     '</div>' +
     '<div class="index-list">';
 
-  for (const e of shown) {
+  for (let i = 0; i < slice.length; i++) {
+    const e = slice[i];
+    const isLatest = !kw && start === 0 && i === 0;   // 仅首页、未搜索时突出最新
     html +=
-      '<a class="entry" href="#/' + e.id + '">' +
+      '<a class="entry' + (isLatest ? ' entry-latest' : '') + '" href="#/' + e.id + '">' +
         '<div class="entry-date">' + fmtDate(e.date) + '<span class="entry-no">' + e.no + '</span></div>' +
         '<div class="entry-body">' +
-          '<div class="entry-title">' + esc(e.title) + '</div>' +
+          '<div class="entry-title">' + esc(e.title) + (isLatest ? '<span class="badge-new">最新</span>' : '') + '</div>' +
           (e.excerpt ? '<div class="entry-excerpt">' + esc(e.excerpt) + '…</div>' : '') +
         '</div>' +
       '</a>';
   }
-  html += '</div>' +
-    '<div class="empty" id="empty" style="display:' + (shown.length ? 'none' : 'block') + '">没有找到这一页</div>';
+  html += '</div>';
+
+  if (totalPages > 1) {
+    html +=
+      '<nav class="pager">' +
+        '<button id="pgPrev"' + (page <= 1 ? ' disabled' : '') + '>← 前一页</button>' +
+        '<span class="pg-info">' + page + ' / ' + totalPages + '</span>' +
+        '<button id="pgNext"' + (page >= totalPages ? ' disabled' : '') + '>后一页 →</button>' +
+      '</nav>';
+  }
+
+  html += '<div class="empty" id="empty" style="display:' + (shown.length ? 'none' : 'block') + '">没有找到这一页</div>';
+
+  /* ── 焦点保护：重渲染前记录输入框焦点状态和光标位置 ── */
+  const oldQ = document.getElementById('q');
+  const wasFocused = !!(oldQ && document.activeElement === oldQ);
+  const selStart = wasFocused ? oldQ.selectionStart : null;
+  const selEnd   = wasFocused ? oldQ.selectionEnd   : null;
 
   $('view').innerHTML = html;
-  const input = $('q');
-  if (input) input.addEventListener('input', () => showIndex(input.value));
+
+  /* ── 渲染后恢复焦点（注意：这里不再挂任何事件监听）── */
+  if (wasFocused) {
+    const input = $('q');
+    if (input) {
+      input.focus();
+      try { input.setSelectionRange(selStart, selEnd); } catch (e) {}
+    }
+  }
+
+  /* ── 分页按钮（每次渲染后重新绑定，按钮是新建的，不会叠加）── */
+  const pgPrev = $('pgPrev'), pgNext = $('pgNext');
+  if (pgPrev) pgPrev.onclick = () => { showIndex(kw, page - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  if (pgNext) pgNext.onclick = () => { showIndex(kw, page + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 }
+
 
 function showPost(id) {
   const e = byId[id];
@@ -646,7 +927,7 @@ function showPost(id) {
   const next = entries[idx - 1];
 
   $('view').innerHTML =
-    '<a class="back" href="#">← 回目录</a>' +
+    '<a class="back" href="#">_ ← 回目录</a>' +
     '<article class="post">' +
       '<div class="post-head">' +
         '<div class="post-date">' + e.no + ' · ' + fmtDateFull(e.date) + '</div>' +
@@ -684,6 +965,16 @@ function route() {
 }
 
 window.addEventListener('hashchange', route);
+/* 搜索输入：事件委托，全站只挂一次 */
+$('view').addEventListener('input', e => {
+  if (e.target.id !== 'q') return;
+  if (e.isComposing) return;            // 中文输入法组词中，不打断
+  clearTimeout(showIndex._t);
+  showIndex._t = setTimeout(() => showIndex(e.target.value, 1), 120);
+});
+$('view').addEventListener('compositionend', e => {
+  if (e.target.id === 'q') showIndex(e.target.value, 1);   // 组词结束立即刷新
+});
 
 const lb = $('lb'), lbImg = $('lbImg');
 lb.onclick = () => lb.style.display = 'none';
@@ -704,6 +995,8 @@ fetch('entries.txt')
   })
   .then(list => {
     entries = list.filter(Boolean).map((x, i) => parseEntry(x.id, x.raw, i));
+    entries.sort((a, b) => b.id.localeCompare(a.id));
+    entries.forEach((e, i) => { e.no = '第 ' + (entries.length - i) + ' 期'; });
     byId = Object.fromEntries(entries.map(e => [e.id, e]));
 
     if (entries.length) {
