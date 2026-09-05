@@ -296,7 +296,7 @@
     background: var(--seal);
   }
 
-  /* ★ 新增 h4：细虚线下划 + 行首小圆点 */
+  /* h4：细虚线下划 + 行首小圆点 */
   .post-body h4 {
     font-size: 15px;
     font-weight: 700;
@@ -360,10 +360,9 @@
   }
   .post-body li:last-child { margin-bottom: 0; }
 
-  /* ★ 核心新增：带链接的条目（即「- [标题](url) — 一句短评」）
+  /* 带链接的条目（即「- [标题](url) — 一句短评」）
      用 :has 识别，整条进入「短评体」：淡墨、略小
-     链接（标题）则回到墨色、加粗、铅笔细线
-     —— 短评部分因为继承 li 的样式，自动变淡变小，无需 JS */
+     链接（标题）则回到墨色、加粗、铅笔细线 */
   .post-body li:has(> a:first-child) {
     color: var(--ink-2);
     font-size: .93em;
@@ -380,7 +379,7 @@
     color: var(--seal);
     border-bottom-color: var(--seal-soft);
   }
-  /* 兼容不支持 :has 的浏览器：至少让 li 里第一个链接有标题感 */
+  /* 兼容不支持 :has 的浏览器 */
   @supports not (selector(:has(*))) {
     .post-body li > a:first-child {
       font-weight: 700;
@@ -388,7 +387,7 @@
     }
   }
 
-  /* ★ 嵌套子列表：虚线导轨 + 更小菱形 + 更淡文字（纯 CSS 二级内容） */
+  /* 嵌套子列表：虚线导轨 + 更小菱形 + 更淡文字 */
   .post-body ul ul,
   .post-body ol ul {
     list-style: none;
@@ -415,13 +414,26 @@
     background: var(--seal);
     opacity: .35;
   }
-  /* 子列表里的链接：淡红，不打断二级的弱化层级 */
+  /* 子列表里的链接：淡墨，不打断二级的弱化层级 */
   .post-body ul ul > li a,
   .post-body ol ul > li a {
     color: var(--ink-2);
     font-weight: 400;
     border-bottom: 1px solid var(--rule);
   }
+
+  /* 长评段：嵌套列表里的 * 条目，无菱形、成段排版 */
+  .post-body ul ul > li.prose::before,
+  .post-body ol ul > li.prose::before { content: none; }
+  .post-body ul ul > li.prose,
+  .post-body ol ul > li.prose {
+    padding-left: 0;
+    margin-bottom: .6em;
+    text-align: justify;
+    line-height: 1.75;
+    font-size: .92em;
+  }
+
   /* 嵌套有序子列表：普通阿拉伯数字，与主列表的中文数字区分 */
   .post-body ul ol,
   .post-body ol ol {
@@ -443,7 +455,7 @@
   }
   .post-body strong { font-weight: 700; color: var(--ink); }
 
-  /* ★ 新增 mark：荧光笔划过 */
+  /* mark：荧光笔划过 */
   .post-body mark {
     background: linear-gradient(to top,
       rgba(214, 178, 90, .45) 45%, transparent 45%);
@@ -451,7 +463,7 @@
     padding: 0 .1em;
   }
 
-  /* ★ 新增 kbd：按键 */
+  /* kbd：按键 */
   .post-body kbd {
     font-family: ui-monospace, "SF Mono", Consolas, monospace;
     font-size: .82em;
@@ -533,7 +545,7 @@
   }
   .post-body pre code { background: none; padding: 0; color: inherit; }
 
-  /* ★ 新增 表格：纸面账目风 */
+  /* 表格：纸面账目风 */
   .post-body table {
     width: 100%;
     border-collapse: collapse;
@@ -556,7 +568,7 @@
   .post-body tr:last-child td { border-bottom: none; }
   .post-body tbody tr:hover td { background: var(--paper-deep); }
 
-  /* ★ 新增 图注 figure / figcaption */
+  /* 图注 figure / figcaption */
   .post-body figure { margin: 1.6em 0; }
   .post-body figure img { margin: 0 auto; }
   .post-body figcaption {
@@ -569,7 +581,7 @@
   }
   .post-body figcaption::before { content: "◈ "; color: var(--seal); opacity: .55; }
 
-  /* ★ 新增 脚注区（Markdown 渲染器输出的 .footnotes） */
+  /* 脚注区 */
   .post-body .footnotes {
     margin-top: 2.2em;
     padding-top: 1em;
@@ -583,7 +595,7 @@
   .post-body li:target,
   .post-body p:target { background: var(--seal-soft); border-radius: 3px; }
 
-  /* ★ 新增 折叠块 details / summary */
+  /* 折叠块 details / summary */
   .post-body details {
     border: 1px solid var(--rule);
     border-radius: 4px;
@@ -601,11 +613,12 @@
   .post-body details[open] summary { margin-bottom: .5em; }
   .post-body details > *:last-child { margin-bottom: 0; }
 
-  /* ★ 新增 任务清单：勾选框换成朱砂色 */
+  /* 任务清单：勾选框换成朱砂色 */
   .post-body input[type="checkbox"] { accent-color: var(--seal); margin-right: .45em; }
-  .post-body li:has(> input[type="checkbox"]) { list-style: none; }
+  .post-body li:has(> input[type="checkbox"]) { list-style: none; padding-left: .2em; }
   .post-body li:has(> input[type="checkbox"])::before { content: none; }
-  .post-body li:has(> input[type="checkbox"]) { padding-left: .2em; }
+  .post-body li.task::before { content: none; }
+  .post-body li.task { padding-left: .2em; }
 
   /* hr：居中花饰 */
   .post-body hr {
@@ -739,6 +752,7 @@ function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+/* ================= Markdown 渲染 ================= */
 function inline(s) {
   return s
     .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,
@@ -747,11 +761,13 @@ function inline(s) {
       '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-    .replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    .replace(/~~([^~]+)~~|～～([^～]+)～～/g, (m, a, b) => '<del>' + (a || b) + '</del>')
+    .replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+    .replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
 }
 
 function renderMD(src) {
+  const FENCE = '\u0060\u0060\u0060';
   const blocks = [];
   const rx = new RegExp(FENCE + '[^\\n]*\\n([\\s\\S]*?)' + FENCE, 'g');
   src = src.replace(rx, (m, code) => {
@@ -759,65 +775,154 @@ function renderMD(src) {
     return '\u0000CODE' + (blocks.length - 1) + '\u0000';
   });
 
+  /* ── <figure>：解析为 图片 + 图注 ── */
+  const htmls = [];
+  src = src.replace(/<figure>\s*\n?([\s\S]*?)<\/figure>/gi, (m, inner) => {
+    const imgM = inner.match(/<img\s[^>]*?src="([^"]*)"[^>]*>/i);
+    const capM = inner.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
+    let alt = '';
+    if (imgM) { const a = imgM[0].match(/alt="([^"]*)"/i); alt = a ? a[1] : ''; }
+    let h = '<figure>';
+    if (imgM) h += '<img src="' + imgM[1] + '" alt="' + esc(alt) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
+    if (capM) h += '<figcaption>' + inline(esc(capM[1].trim())) + '</figcaption>';
+    h += '</figure>';
+    htmls.push(h);
+    return '\u0000HTML' + (htmls.length - 1) + '\u0000';
+  });
+
+  /* ── <details>：内部内容递归渲染 ── */
+  src = src.replace(/<details>([\s\S]*?)<\/details>/gi, (m, inner) => {
+    const sumM = inner.match(/<summary>([\s\S]*?)<\/summary>/i);
+    const body = inner.replace(/<summary>[\s\S]*?<\/summary>/i, '');
+    const sum = sumM ? esc(sumM[1].trim()) : '展开';
+    htmls.push('<details><summary>' + sum + '</summary>' + renderMD(body.trim()) + '</details>');
+    return '\u0000HTML' + (htmls.length - 1) + '\u0000';
+  });
+
   const lines = esc(src).split('\n');
-  let html = '', list = null, quote = null, para = [];
+  let out = '';
+  let stack = [];      /* 列表栈：{tag, indent, inject} */
+  let quote = false;
+  let para = [];
 
-  const flushPara = () => {
-    if (para.length) { html += '<p>' + inline(para.join('<br>')) + '</p>'; para = []; }
+  const flushPara = () => { if (para.length) { out += '<p>' + inline(para.join('<br>')) + '</p>'; para = []; } };
+  const closeQuote = () => { if (quote) { out += '</blockquote>'; quote = false; } };
+  const closeLists = n => {
+    while (stack.length > n) {
+      const s = stack.pop();
+      out += '</' + s.tag + '>';
+      if (s.inject) out += '</li>';
+    }
   };
-  const flushAll = () => {
-    if (list) { html += '</' + list + '>'; list = null; }
-    if (quote) { html += '</blockquote>'; quote = null; }
-    flushPara();
-  };
+  const flushAll = () => { closeQuote(); closeLists(0); flushPara(); };
 
-  for (let line of lines) {
-    const codeM = line.match(/^\u0000CODE(\d+)\u0000$/);
-    if (codeM) {
-      flushAll();
-      html += '<pre><code>' + esc(blocks[+codeM[1]]) + '</code></pre>';
-      continue;
-    }
-    const h = line.match(/^(#{1,3})\s+(.*)/);
-    if (h) {
-      flushAll();
-      const l = h[1].length;
-      html += '<h' + l + '>' + inline(h[2]) + '</h' + l + '>';
-      continue;
-    }
-    if (/^\s*(-{3,}|\*{3,})\s*$/.test(line)) { flushAll(); html += '<hr>'; continue; }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const t = line.trim();
 
-    const q = line.match(/^>\s?(.*)/);
-    if (q) {
-      flushPara();
-      if (list) { html += '</' + list + '>'; list = null; }
-      if (!quote) { html += '<blockquote>'; quote = true; }
-      html += '<p>' + inline(q[1]) + '</p>';
-      continue;
-    }
-    if (quote) { html += '</blockquote>'; quote = false; }
+    /* 代码块占位 */
+    const codeM = line.match(/^\u0000CODE(\d+)\u0000\s*$/);
+    if (codeM) { flushAll(); out += '<pre><code>' + esc(blocks[+codeM[1]]) + '</code></pre>'; continue; }
+    /* HTML 占位（figure / details） */
+    const htmlM = line.match(/^\u0000HTML(\d+)\u0000\s*$/);
+    if (htmlM) { flushAll(); out += htmls[+htmlM[1]]; continue; }
 
-    const ul = line.match(/^\s*[-*]\s+(.*)/);
-    const ol = line.match(/^\s*\d+\.\s+(.*)/);
-    if (ul || ol) {
-      flushPara();
-      const tag = ul ? 'ul' : 'ol';
-      if (list !== tag) {
-        if (list) html += '</' + list + '>';
-        html += '<' + tag + '>';
-        list = tag;
+    /* 标题：1–4 级 */
+    const h = t.match(/^(#{1,4})\s+(.*)/);
+    if (h) { flushAll(); out += '<h' + h[1].length + '>' + inline(h[2]) + '</h' + h[1].length + '>'; continue; }
+
+    /* 分隔线 */
+    if (/^(-{3,}|\*{3,})$/.test(t)) { flushAll(); out += '<hr>'; continue; }
+
+    /* 表格：当前行含 |，下一行是 |---|---| 分隔行 */
+    if (t.indexOf('|') !== -1 && i + 1 < lines.length) {
+      const sep = lines[i + 1].trim();
+      if (/^[\s|:-]+$/.test(sep) && sep.indexOf('-') !== -1 && sep.indexOf('|') !== -1) {
+        flushAll();
+        const cellsOf = r => r.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map(c => c.trim());
+        const aligns = cellsOf(sep).map(a =>
+          a[0] === ':' && a[a.length - 1] === ':' ? 'center' :
+          a[a.length - 1] === ':' ? 'right' : 'left');
+        const mk = (c, k, tag2) =>
+          '<' + tag2 + (aligns[k] ? ' style="text-align:' + aligns[k] + '"' : '') + '>'
+          + inline(c) + '</' + tag2 + '>';
+        const head = cellsOf(t).map((c, k) => mk(c, k, 'th')).join('');
+        let rows = '', j = i + 2;
+        while (j < lines.length && lines[j].trim().indexOf('|') !== -1) {
+          rows += '<tr>' + cellsOf(lines[j]).map((c, k) => mk(c, k, 'td')).join('') + '</tr>';
+          j++;
+        }
+        out += '<table><thead><tr>' + head + '</tr></thead><tbody>' + rows + '</tbody></table>';
+        i = j - 1;
+        continue;
       }
-      html += '<li>' + inline((ul || ol)[1]) + '</li>';
+    }
+
+    /* 引用：esc 已把 > 转成 &gt;，按 &gt; 匹配；支持多行连续 */
+    const q = t.match(/^&gt;\s?(.*)/);
+    if (q) {
+      flushPara(); closeLists(0);
+      if (!quote) { out += '<blockquote>'; quote = true; }
+      /* 外层「」交给 CSS 角标，正文里不用再写 */
+      const qt = q[1].replace(/^「/, '').replace(/」$/, '');
+      out += '<p>' + inline(qt) + '</p>';
       continue;
     }
-    if (list) { html += '</' + list + '>'; list = null; }
+    closeQuote();
 
-    if (!line.trim()) { flushPara(); continue; }
-    para.push(line.trim());
+    /* 列表：无序 / 有序 / 任务清单 / 长评段（*），支持任意层级嵌套
+       注意：mUL[1] = 列表符号（- 或 *），mUL[2] = 内容 */
+    const indent = line.replace(/\t/g, '  ').match(/^\s*/)[0].length;
+    let tag = null, content = null, task = null, isStar = false;
+    const mUL = t.match(/^([-*])\s+(.*)/);
+    const mOL = t.match(/^\d+[.．]\s+(.*)/);
+    if (mUL) {
+      tag = 'ul';
+      isStar = mUL[1] === '*';
+      const tk = mUL[2].match(/^\[( |x|X)\]\s+(.*)$/);
+      if (tk) { task = tk[1].toLowerCase() === 'x'; content = tk[2]; }
+      else content = mUL[2];
+    } else if (mOL) { tag = 'ol'; content = mOL[1]; }
+
+    if (tag) {
+      flushPara(); closeQuote();
+      /* 关闭比当前更深的层级；同级但列表类型不同（ul↔ol 切换）也先关闭 */
+      while (stack.length &&
+            (stack[stack.length - 1].indent > indent ||
+             (stack[stack.length - 1].indent === indent && stack[stack.length - 1].tag !== tag))) {
+        closeLists(stack.length - 1);
+      }
+      /* 嵌套：把新列表挂进上一条 li 内 */
+      let inject = false;
+      if (stack.length && stack[stack.length - 1].indent < indent && out.slice(-5) === '</li>') {
+        out = out.slice(0, -5);
+        inject = true;
+      }
+      if (!stack.length || stack[stack.length - 1].indent < indent) {
+        out += '<' + tag + '>';
+        stack.push({ tag, indent, inject });
+      }
+      /* 输出条目 */
+      if (task !== null) {
+        out += '<li class="task"><input type="checkbox" disabled' + (task ? ' checked' : '') + '>' + inline(content) + '</li>';
+      } else if (isStar && stack.length > 1) {
+        /* 嵌套列表中的 * 条目 = 长评段 */
+        out += '<li class="prose">' + inline(content) + '</li>';
+      } else {
+        out += '<li>' + inline(content) + '</li>';
+      }
+      continue;
+    }
+    closeLists(0);
+
+    /* 空行 / 段落 */
+    if (!t) { flushPara(); continue; }
+    para.push(t);
   }
   flushAll();
-  return html;
+  return out;
 }
+
 
 function parseEntry(id, raw, idx) {
   const lines = raw.split('\n');
@@ -899,7 +1004,7 @@ function showIndex(kw, page) {
 
   $('view').innerHTML = html;
 
-  /* ── 渲染后恢复焦点（注意：这里不再挂任何事件监听）── */
+  /* ── 渲染后恢复焦点 ── */
   if (wasFocused) {
     const input = $('q');
     if (input) {
@@ -908,7 +1013,7 @@ function showIndex(kw, page) {
     }
   }
 
-  /* ── 分页按钮（每次渲染后重新绑定，按钮是新建的，不会叠加）── */
+  /* ── 分页按钮（每次渲染后重新绑定）── */
   const pgPrev = $('pgPrev'), pgNext = $('pgNext');
   if (pgPrev) pgPrev.onclick = () => { showIndex(kw, page - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
   if (pgNext) pgNext.onclick = () => { showIndex(kw, page + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
