@@ -1292,7 +1292,7 @@ fetch('entries.txt')
   .then(txt => {
     const ids = txt.split('\n').map(s => s.trim()).filter(Boolean);
     return Promise.all(ids.map(id =>
-      fetch('posts/' + id + '.md')
+      fetch('posts/' + id)
         .then(r => r.ok ? r.text() : Promise.reject(id))
         .then(raw => ({ id, raw }))
         .catch(() => null)
