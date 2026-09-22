@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>速写本 · Weekly Log</title>
 <meta name="robots" content="noindex">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f7f3e8'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23b5432e' font-family='Songti SC, SimSun, serif' font-weight='900'%3E速%3C/text%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23f7f3e8'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='%23b5432e' font-family='Songti SC,SimSun,serif' font-weight='900'%3E速%3C/text%3E%3C/svg%3E">
 <style>
   :root {
     --paper: #f7f3e8;
@@ -808,12 +808,50 @@
 const FENCE = '\u0060\u0060\u0060';
 
 const $ = id => document.getElementById(id);
-let entries = [];
+let entries = [];        /* 已到期的（用于列表 / 搜索 / 路由） */
+let allEntries = [];     /* 全部（含未到期，用于定时解锁与期号） */
 const PAGE_SIZE = 5;
 let byId = {};
 
 function esc(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ================= 定时发布 front matter =================
+   posts/xxx.md 头部可写：
+
+     ---
+     publish: 2026-09-25T20:00:00+08:00
+     ---
+
+   到点之前：不进目录、不进搜索、导航也跳过。
+   没写 publish 时：按文件名日期当天 00:00 发布。
+   -------------------------------------------------------- */
+function parseFrontMatter(raw) {
+  const m = raw.match(/^\uFEFF?---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*(?:\r?\n|$)/);
+  if (!m) return { meta: {}, body: raw };
+  const meta = {};
+  m[1].split('\n').forEach(line => {
+    const i = line.indexOf(':');
+    if (i > 0) {
+      meta[line.slice(0, i).trim().toLowerCase()] =
+        line.slice(i + 1).trim().replace(/^['"]|['"]$/g, '');
+    }
+  });
+  return { meta, body: raw.slice(m[0].length) };
+}
+
+function publishAt(meta, id) {
+  const raw = meta.publish || meta.pub || '';
+  if (raw) {
+    /* 纯日期 → 本地 00:00；"2026-09-25 20:00" 里的空格换成 T，Safari 才认 */
+    const s = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw + 'T00:00:00' : raw.replace(' ', 'T');
+    const t = Date.parse(s);
+    if (!isNaN(t)) return t;
+    console.warn('[速写本] publish 无法解析：' + raw + '（' + id + '）');
+  }
+  const t = Date.parse(id + 'T00:00:00');
+  return isNaN(t) ? 0 : t;
 }
 
 /* ================= Markdown 渲染 ================= */
@@ -989,7 +1027,9 @@ function renderMD(src) {
 
 
 function parseEntry(id, raw, idx) {
-  const lines = raw.split('\n');
+  const fm = parseFrontMatter(raw);                 /* ← 剥掉 front matter */
+  const lines = fm.body.split('\n');
+
   let title = '无题', start = 0;
   const m = lines[0] && lines[0].match(/^#\s+(.*)/);
   if (m) { title = m[1].trim(); start = 1; }
@@ -1003,7 +1043,12 @@ function parseEntry(id, raw, idx) {
     excerpt = t.replace(/^>\s?/, '').replace(/[*`>~\[\]!]/g, '').slice(0, 90);
     break;
   }
-  return { id, title, excerpt, date: id, no: '第 ' + String(idx) + ' 期', body: body };
+  return {
+    id, title, excerpt, date: id,
+    no: '第 ' + String(idx) + ' 期',
+    body,
+    pubAt: publishAt(fm.meta, id),                  /* ← 发布时间戳（ms） */
+  };
 }
 
 function fmtDate(id) {
@@ -1135,6 +1180,18 @@ function showIndex(kw, page) {
 function showPost(id) {
   const e = byId[id];
   if (!e) {
+    /* 已被过滤掉，但文件确实存在 → 说明是「未到发布时间」 */
+    const pending = allEntries.find(x => x.id === id);
+    if (pending) {
+      $('view').innerHTML =
+        '<p class="empty" style="display:block">' +
+          '这一期还没到解锁时间（' +
+          new Date(pending.pubAt).toLocaleString('zh-CN', { hour12: false }) +
+          '）<br>' +
+          '<a href="#" onclick="location.hash=\'\';return false" style="color:var(--seal)">回目录</a>' +
+        '</p>';
+      return;
+    }
     $('view').innerHTML =
       '<p class="empty" style="display:block">这一页好像被撕掉了 <a href="#" onclick="location.hash=\'\';return false" style="color:var(--seal)">回目录</a></p>';
     return;
@@ -1177,6 +1234,35 @@ function showPost(id) {
   window.scrollTo(0, 0);
 }
 
+/* ================= 发布过滤 + 定时解锁 ================= */
+function applyPublishFilter() {
+  const now = Date.now();
+  entries = allEntries.filter(e => e.pubAt <= now);
+  byId = Object.fromEntries(entries.map(e => [e.id, e]));
+}
+
+/* 页面一直开着，到点自动解锁。
+   setTimeout 上限约 24.8 天，超过就续期递归。 */
+function scheduleUnlock() {
+  const now = Date.now();
+  const next = allEntries
+    .filter(e => e.pubAt > now)
+    .sort((a, b) => a.pubAt - b.pubAt)[0];
+  if (!next) return;
+
+  const delay = Math.min(next.pubAt - now, 2147483647);
+  setTimeout(() => {
+    const before = entries.length;
+    applyPublishFilter();
+    /* 只在目录视图刷新；正在读文章就不打扰 */
+    if (entries.length > before && !/^#\/[\w-]+$/.test(location.hash)) {
+      const q = document.getElementById('q');
+      showIndex(q ? q.value : '', 1);
+    }
+    scheduleUnlock();
+  }, delay + 500);
+}
+
 function route() {
   const m = location.hash.match(/^#\/([\w-]+)$/);
   if (m) showPost(m[1]);
@@ -1213,16 +1299,19 @@ fetch('entries.txt')
     ));
   })
   .then(list => {
-    entries = list.filter(Boolean).map((x, i) => parseEntry(x.id, x.raw, i));
-    entries.sort((a, b) => b.id.localeCompare(a.id));
-    entries.forEach((e, i) => { e.no = '第 ' + (entries.length - i) + ' 期'; });
-    byId = Object.fromEntries(entries.map(e => [e.id, e]));
+    allEntries = list.filter(Boolean).map((x, i) => parseEntry(x.id, x.raw, i));
+    allEntries.sort((a, b) => b.id.localeCompare(a.id));
+    /* 期号按「全量」算，这样未到期的那期解锁后编号不会跳 */
+    allEntries.forEach((e, i) => { e.no = '第 ' + (allEntries.length - i) + ' 期'; });
+
+    applyPublishFilter();
 
     if (entries.length) {
       $('range').textContent =
         entries[entries.length - 1].date + ' — ' + entries[0].date;
     }
     route();
+    scheduleUnlock();
   })
   .catch(() => {
     $('view').innerHTML = '<p class="empty" style="display:block">速写本还是空的</p>';
