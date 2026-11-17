@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const SITE = process.argv[2] || 'https://www.jinmajue.top/journal/';
+const SITE = process.argv[2] || 'https://www.jinmajue.top/journal';
 const LIMIT = 20;                    // feed 里最多放几期
 
 const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;')
@@ -67,6 +67,10 @@ const xml = `<?xml version="1.0" encoding="utf-8"?>
   <link rel="self" type="application/atom+xml" href="${SITE}/feed.xml"/>
   <id>${SITE}/</id>
   <updated>${new Date(feed[0]?.pubAt ?? now).toISOString()}</updated>
+  <author>
+    <name>vestjin</name>
+    <uri>${SITE}/</uri>
+  </author>
 ${feed.map(e => `  <entry>
     <title>${esc(e.title)}</title>
     <link rel="alternate" type="text/html" href="${SITE}/#/${e.id}"/>

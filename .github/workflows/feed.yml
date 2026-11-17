@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with: { node-version: 20 }
-      - run: node gen-feed.js https://www.jinmajue.top/journal/      # ← 改成实际站点地址
+      - run: node gen-feed.js https://www.jinmajue.top/journal      # ← 改成实际站点地址
       - name: Commit feed.xml
         run: |
           git config user.name  "feed-bot"
