@@ -495,34 +495,67 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') lb.style.display = 'none';
 });
 
-fetch('entries.txt')
-  .then(r => r.text())
-  .then(txt => {
+/* ---------- 数据源：内联优先，回退到 fetch ---------- */
+function loadPosts() {
+  if (window.POSTS_DATA && window.POSTS_DATA.length) {
+    return Promise.resolve(window.POSTS_DATA.slice());
+  }
+  return fetch('entries.txt').then(r => r.text()).then(txt => {
     const ids = txt.split('\n').map(s => s.trim()).filter(Boolean);
     return Promise.all(ids.map(id =>
       fetch('posts/' + id + '.md')
         .then(r => r.ok ? r.text() : Promise.reject(id))
         .then(raw => ({ id, raw }))
         .catch(() => null)
-    ));
-  })
-  .then(list => {
-    allEntries = list.filter(Boolean).map((x, i) => parseEntry(x.id, x.raw, i));
-    allEntries.sort((a, b) => b.id.localeCompare(a.id));
-    /* 期号按「全量」算，这样未到期的那期解锁后编号不会跳 */
-    allEntries.forEach((e, i) => { e.no = '第 ' + (allEntries.length - i) + ' 期'; });
-
-    applyPublishFilter();
-
-    if (entries.length) {
-      $('range').textContent =
-        entries[entries.length - 1].date + ' — ' + entries[0].date;
-    }
-    route();
-    scheduleUnlock();
-  })
-  .catch(() => {
-    $('view').innerHTML = '<p class="empty" style="display:block">速写本还是空的</p>';
+    )).then(list => list.filter(Boolean));
   });
+}
+
+/* ---------- localStorage 缓存 ---------- */
+const CACHE_KEY = 'journal:posts:v1';
+function readCache() {
+  try { const d = JSON.parse(localStorage.getItem(CACHE_KEY)); if (d && d.length) return d; } catch (e) {}
+  return null;
+}
+function writeCache(list) { try { localStorage.setItem(CACHE_KEY, JSON.stringify(list)); } catch (e) {} }
+
+/* ---------- 骨架屏 ---------- */
+function renderSkeleton() {
+  if ($('view') && !$('view').innerHTML) {
+    $('view').innerHTML =
+      '<div class="skeleton" aria-hidden="true">' +
+        '<div class="sk-row" style="width:40%"></div>' +
+        '<div class="sk-row" style="width:90%"></div>' +
+        '<div class="sk-row short" style="width:70%"></div>' +
+        '<div class="sk-row" style="width:85%"></div>' +
+      '</div>';
+  }
+}
+
+/* ---------- 装配 + 路由（原 boot 逻辑抽出来） ---------- */
+function boot(list) {
+  allEntries = list.map((x, i) => parseEntry(x.id, x.raw, i));
+  allEntries.sort((a, b) => b.id.localeCompare(a.id));
+  allEntries.forEach((e, i) => { e.no = '第 ' + (allEntries.length - i) + ' 期'; });
+  applyPublishFilter();
+  if (entries.length) {
+    $('range').textContent = entries[entries.length - 1].date + ' — ' + entries[0].date;
+  }
+  /* 正在读某篇文章时别打断，只在目录视图刷新 */
+  if (!/^#\/[\w-]+$/.test(location.hash)) route();
+  else if (!byId[location.hash.slice(2)]) route();
+  scheduleUnlock();
+}
+
+/* ---------- 启动 ---------- */
+renderSkeleton();
+const cached = readCache();
+if (cached) boot(cached);                       // 有缓存：先秒出
+loadPosts().then(list => {
+  writeCache(list);
+  boot(list);                                   // 拿到最新：校对/刷新一次
+}).catch(() => {
+  if (!cached) $('view').innerHTML = '<p class="empty" style="display:block">速写本还是空的</p>';
+});
 
 $('year').textContent = new Date().getFullYear();

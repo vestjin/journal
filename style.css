@@ -788,3 +788,9 @@ footer.colophon {
   .brand .icons { gap: 8px; margin-left: 8px; }
   .brand .icons svg { width: 16px; height: 16px; }
 }
+.skeleton{padding:8px 0}
+.sk-row{height:14px;margin:18px 0;border-radius:4px;
+  background:linear-gradient(90deg,var(--paper-deep) 25%,var(--rule) 37%,var(--paper-deep) 63%);
+  background-size:400% 100%;animation:sk 1.2s ease-in-out infinite}
+.sk-row.short{width:50%}
+@keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
