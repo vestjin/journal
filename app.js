@@ -470,7 +470,7 @@ function route() {
   else showIndex('');
 }
 
-window.addEventListener('hashchange', route);
+window.addEventListener('hashchange', () => { route(); lastRendered = location.hash || '#/'; });
 
 /* 搜索输入：事件委托，全站只挂一次 */
 $('view').addEventListener('input', e => {
@@ -533,6 +533,8 @@ function renderSkeleton() {
 }
 
 /* ---------- 装配 + 路由（原 boot 逻辑抽出来） ---------- */
+let lastRendered = null;   // 记录已渲染的路由，避免二次 boot 打断阅读
+
 function boot(list) {
   allEntries = list.map((x, i) => parseEntry(x.id, x.raw, i));
   allEntries.sort((a, b) => b.id.localeCompare(a.id));
@@ -541,10 +543,13 @@ function boot(list) {
   if (entries.length) {
     $('range').textContent = entries[entries.length - 1].date + ' — ' + entries[0].date;
   }
-/* 视图为空（首次加载 / 刷新）就必须渲染当前路由；
-     已在阅读中收到二次数据刷新时不打断 */
-  if (!$('view').innerHTML.trim()) route();
-  scheduleUnlock();
+  /* 首次进入 / 刷新：无内容或路由变了 → 渲染；
+     二次 boot（缓存后校对）且仍在读同一篇 → 不打断 */
+  const key = location.hash || '#/';
+  if (!$('view').innerHTML.trim() || lastRendered !== key) {
+    route();
+    lastRendered = key;
+  }
 }
 
 /* ---------- 启动 ---------- */
