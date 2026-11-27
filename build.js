@@ -41,7 +41,8 @@ function publishAt(meta, id){
 /* ---- Markdown → HTML（与前端 renderMD 对齐的精简版，够 RSS 用）---- */
 function inline(s){
   return s
-    .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, '<img src="$2" alt="$1" loading="lazy">')
+    .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,
+      (m, alt, src) => '<img src="' + (SITE + '/' + src.replace(/^\.\.?\//, '')) + '" alt="' + alt + '" loading="lazy">')
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')

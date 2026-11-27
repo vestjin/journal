@@ -59,7 +59,7 @@ function publishAt(meta, id) {
 function inline(s) {
   return s
     .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,
-      '<img src="$2" alt="$1" loading="lazy" decoding="async" referrerpolicy="no-referrer">')
+      (m, alt, src) => '<img src="' + src.replace(/^\.\.?\//, '') + '" alt="' + alt + '" loading="lazy" decoding="async" referrerpolicy="no-referrer">')
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
