@@ -794,3 +794,6 @@ footer.colophon {
   background-size:400% 100%;animation:sk 1.2s ease-in-out infinite}
 .sk-row.short{width:50%}
 @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
+.search{position:relative}
+.search .search-count{font-size:12px;color:var(--ink-3,#888);white-space:nowrap;margin-left:4px}
+.search mark,.entry-title mark,.entry-excerpt mark{background:#ffe9a8;color:inherit;padding:0 2px;border-radius:2px}

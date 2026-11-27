@@ -306,7 +306,12 @@ function initTOC() {
   }, { rootMargin: '-15% 0px -75% 0px' });
   heads.forEach(h => tocObs.observe(h));
 }
-
+/* 搜索命中高亮：在已 esc 的 HTML 上包 <mark> */
+function highlight(html, kw) {
+  if (!kw) return html;
+  const safe = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return String(html).replace(new RegExp(safe, 'gi'), m => '<mark>' + m + '</mark>');
+}
 function showIndex(kw, page) {
   kw = (kw || '').trim().toLowerCase();
   page = page || 1;
@@ -322,10 +327,11 @@ function showIndex(kw, page) {
   const start = (page - 1) * PAGE_SIZE;
   const slice = shown.slice(start, start + PAGE_SIZE);
 
-  let html =
+let html =
     '<div class="search">' +
       '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' +
       '<input type="search" id="q" placeholder="翻找旧页…" autocomplete="off" value="' + esc(kw || '') + '">' +
+      (kw ? '<span class="search-count">' + shown.length + ' 条</span>' : '') +
     '</div>' +
     '<div class="index-list">';
 
@@ -336,8 +342,8 @@ function showIndex(kw, page) {
       '<a class="entry' + (isLatest ? ' entry-latest' : '') + '" href="#/' + e.id + '">' +
         '<div class="entry-date">' + fmtDate(e.date) + '<span class="entry-no">' + e.no + '</span></div>' +
         '<div class="entry-body">' +
-          '<div class="entry-title">' + esc(e.title) + (isLatest ? '<span class="badge-new">最新</span>' : '') + '</div>' +
-          (e.excerpt ? '<div class="entry-excerpt">' + esc(e.excerpt) + '…</div>' : '') +
+          '<div class="entry-title">' + highlight(esc(e.title), kw) + (isLatest ? '<span class="badge-new">最新</span>' : '') + '</div>' +
+          (e.excerpt ? '<div class="entry-excerpt">' + highlight(esc(e.excerpt), kw) + '…</div>' : '') +
         '</div>' +
       '</a>';
   }
