@@ -541,9 +541,9 @@ function boot(list) {
   if (entries.length) {
     $('range').textContent = entries[entries.length - 1].date + ' — ' + entries[0].date;
   }
-  /* 正在读某篇文章时别打断，只在目录视图刷新 */
-  if (!/^#\/[\w-]+$/.test(location.hash)) route();
-  else if (!byId[location.hash.slice(2)]) route();
+/* 视图为空（首次加载 / 刷新）就必须渲染当前路由；
+     已在阅读中收到二次数据刷新时不打断 */
+  if (!$('view').innerHTML.trim()) route();
   scheduleUnlock();
 }
 
