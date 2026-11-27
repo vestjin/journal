@@ -1,23 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<script>
-  /* 自动适配基准路径：以 index.html 所在目录为根
-     - https://域名/journal/#/xx   → /journal/
-     - https://域名/#/xx            → /
-     - file:///.../journal/index.html → file:///.../journal/  */
-  (function () {
-    var path = location.pathname.replace(/\\/g, '/');
-    // 若 path 以 / 结尾，说明本就是目录；否则取其所在目录
-    var dir = path.endsWith('/') ? path : path.slice(0, path.lastIndexOf('/') + 1);
-    var base = location.origin + dir;
-    var el = document.createElement('base');
-    el.href = base;
-    document.head.appendChild(el);
-    // 供 app.js 内 fetch 等需要绝对地址的地方复用
-    window.BASE_URL = base;
-  })();
-</script>
+<base href="/journal/">
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="alternate" type="application/atom+xml"
