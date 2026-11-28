@@ -58,8 +58,6 @@ function publishAt(meta, id) {
 /* ================= Markdown 渲染 ================= */
 function inline(s) {
   return s
-    .replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g,
-      (m, alt, src) => '<img src="' + src.replace(/^\.\.?\//, '') + '" alt="' + alt + '" loading="lazy" decoding="async" referrerpolicy="no-referrer">')
     .replace(/\[([^\]]+)\]\(([^)\s]+)\)/g,
       '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -78,20 +76,15 @@ function renderMD(src) {
     return '\u0000CODE' + (blocks.length - 1) + '\u0000';
   });
 
-  /* ── <figure>：解析为 图片 + 图注 ── */
-  const htmls = [];
-  src = src.replace(/<figure>\s*\n?([\s\S]*?)<\/figure>/gi, (m, inner) => {
-    const imgM = inner.match(/<img\s[^>]*?src="([^"]*)"[^>]*>/i);
-    const capM = inner.match(/<figcaption>([\s\S]*?)<\/figcaption>/i);
-    let alt = '';
-    if (imgM) { const a = imgM[0].match(/alt="([^"]*)"/i); alt = a ? a[1] : ''; }
-    let h = '<figure>';
-    if (imgM) h += '<img src="' + imgM[1] + '" alt="' + esc(alt) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer">';
-    if (capM) h += '<figcaption>' + inline(esc(capM[1].trim())) + '</figcaption>';
-    h += '</figure>';
-    htmls.push(h);
+  // 新增：将 ![]() 自动转为 <figure> 结构
+  src = src.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (match, alt, srcUrl) => {
+    const imgSrc = srcUrl.replace(/^\.\.?\//, '');
+    const caption = inline(esc(alt));   // 允许图注内有加粗等行内格式
+    const figureHtml = '<figure><img src="' + imgSrc + '" alt="' + esc(alt) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer"><figcaption>' + caption + '</figcaption></figure>';
+    htmls.push(figureHtml);
     return '\u0000HTML' + (htmls.length - 1) + '\u0000';
   });
+
 
   /* ── <details>：内部内容递归渲染 ── */
   src = src.replace(/<details>([\s\S]*?)<\/details>/gi, (m, inner) => {
