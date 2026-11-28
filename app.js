@@ -429,9 +429,15 @@ function showIndex(kw, page) {
   if (totalPages > 1) {
     html +=
       '<nav class="pager">' +
-        '<button id="pgPrev"' + (page <= 1 ? ' disabled' : '') + '>← 前一页</button>' +
-        '<span class="pg-info">' + page + ' / ' + totalPages + '</span>' +
-        '<button id="pgNext"' + (page >= totalPages ? ' disabled' : '') + '>后一页 →</button>' +
+        '<button id="pgFirst"' + (page <= 1 ? ' disabled' : '') + ' title="首页">⏮ 首页</button>' +
+        '<button id="pgPrev"'  + (page <= 1 ? ' disabled' : '') + '>← 前一页</button>' +
+        '<span class="pg-info">' +
+          '<input id="pgInput" type="number" min="1" max="' + totalPages + '" ' +
+                'value="' + page + '" inputmode="numeric" aria-label="跳转页码">' +
+          '<span class="pg-total"> / ' + totalPages + '</span>' +
+        '</span>' +
+        '<button id="pgNext"'  + (page >= totalPages ? ' disabled' : '') + '>后一页 →</button>' +
+        '<button id="pgLast"'  + (page >= totalPages ? ' disabled' : '') + ' title="尾页">尾页 ⏭</button>' +
       '</nav>';
   }
   html += '<div class="empty"' + (total ? ' style="display:none"' : '') + '>没有找到这一页</div>';
@@ -442,9 +448,33 @@ function showIndex(kw, page) {
   if (terms.length) { count.hidden = false; count.textContent = total + ' 条'; }
   else { count.hidden = true; count.textContent = ''; }
 
-  const pgPrev = $('pgPrev'), pgNext = $('pgNext');
-  if (pgPrev) pgPrev.onclick = () => { showIndex(raw, page - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  if (pgNext) pgNext.onclick = () => { showIndex(raw, page + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  /* ── 分页控件：首/尾/前后 + 页码输入，每次渲染后重新绑定 ── */
+  const goPage = p => {
+    p = parseInt(p, 10);
+    if (!Number.isFinite(p)) p = 1;
+    p = Math.min(Math.max(1, p), totalPages);
+    if (p === page) return;
+    showIndex(raw, p);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const bindBtn = (id, fn) => { const el = $(id); if (el) el.onclick = fn; };
+  bindBtn('pgFirst', () => goPage(1));
+  bindBtn('pgPrev',  () => goPage(page - 1));
+  bindBtn('pgNext',  () => goPage(page + 1));
+  bindBtn('pgLast',  () => goPage(totalPages));
+
+  const pgInput = $('pgInput');
+  if (pgInput) {
+    pgInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); goPage(pgInput.value); }
+    });
+    pgInput.addEventListener('focus', () => pgInput.select());
+    pgInput.addEventListener('blur', () => {
+      const v = parseInt(pgInput.value, 10);
+      if (!Number.isFinite(v) || v < 1 || v > totalPages) pgInput.value = page;
+    });
+  }
 }
 
 
