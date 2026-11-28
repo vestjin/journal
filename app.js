@@ -319,44 +319,108 @@ function initTOC() {
   }, { rootMargin: '-15% 0px -75% 0px' });
   heads.forEach(h => tocObs.observe(h));
 }
-/* 搜索命中高亮：在已 esc 的 HTML 上包 <mark> */
-function highlight(html, kw) {
-  if (!kw) return html;
-  const safe = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  return String(html).replace(new RegExp(safe, 'gi'), m => '<mark>' + m + '</mark>');
+/* ================= 搜索 ================= */
+function escRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+function highlightTerms(html, terms) {
+  if (!terms || !terms.length) return html;
+  const pat = terms.map(escRe).filter(Boolean).join('|');
+  if (!pat) return html;
+  return String(html).replace(new RegExp('(' + pat + ')', 'gi'), '<mark>$1</mark>');
 }
+
+function stripMD(s) {
+  return String(s)
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~=|]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function makeSnippet(e, terms) {
+  const body = stripMD(e.body);
+  if (!terms.length) return body.slice(0, 90);
+  const lower = body.toLowerCase();
+  let idx = -1;
+  for (const t of terms) {
+    const i = lower.indexOf(t);
+    if (i >= 0 && (idx < 0 || i < idx)) idx = i;
+  }
+  if (idx < 0) return body.slice(0, 90);
+  const start = Math.max(0, idx - 24);
+  const end = Math.min(body.length, idx + 66);
+  return (start > 0 ? '…' : '') + body.slice(start, end) + (end < body.length ? '…' : '');
+}
+
+function searchEntries(rawQuery) {
+  const terms = rawQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!terms.length) return { terms, list: entries };
+  const hits = [];
+  for (const e of entries) {
+    const title = e.title.toLowerCase();
+    const excerpt = (e.excerpt || '').toLowerCase();
+    const body = e.body.toLowerCase();
+    let score = 0, ok = true;
+    for (const t of terms) {
+      const ti = title.indexOf(t);
+      const ei = excerpt.indexOf(t);
+      const bi = body.indexOf(t);
+      if (ti < 0 && ei < 0 && bi < 0) { ok = false; break; }
+      if (ti >= 0) score += 100 + Math.max(0, 30 - ti);
+      else if (ei >= 0) score += 30;
+      if (bi >= 0) score += 8;
+    }
+    if (ok) hits.push({ e, score });
+  }
+  hits.sort((a, b) => b.score - a.score || b.e.id.localeCompare(a.e.id));
+  return { terms, list: hits.map(h => h.e) };
+}
+
+/* 目录页外壳只建一次；输入过程中不重建搜索框，空格/光标/输入法才稳 */
+function ensureSearchShell(raw) {
+  const view = $('view');
+  let input = $('q');
+  if (!input) {
+    view.innerHTML =
+      '<div class="search">' +
+        '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' +
+        '<input type="search" id="q" placeholder="翻找旧页…" autocomplete="off">' +
+        '<span class="search-count" id="searchCount" hidden></span>' +
+      '</div>' +
+      '<div id="result"></div>';
+    input = $('q');
+  }
+  if (document.activeElement !== input) input.value = raw;   // 正在输入时绝不覆盖
+  return input;
+}
+
 function showIndex(kw, page) {
-  kw = (kw || '').trim().toLowerCase();
+  const raw = kw == null ? '' : String(kw);      // 原样保留，过滤时才 trim
   page = page || 1;
-  $('tocRail').innerHTML = '';        /* 非文章视图不显示目录 */
+  $('tocRail').innerHTML = '';
 
-  const shown = kw
-    ? entries.filter(e => (e.title + ' ' + e.excerpt + ' ' + e.body).toLowerCase().includes(kw))
-    : entries;
+  ensureSearchShell(raw);
 
-  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const { terms, list } = searchEntries(raw);
+  const total = list.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   page = Math.min(Math.max(1, page), totalPages);
-
   const start = (page - 1) * PAGE_SIZE;
-  const slice = shown.slice(start, start + PAGE_SIZE);
+  const slice = list.slice(start, start + PAGE_SIZE);
 
-let html =
-    '<div class="search">' +
-      '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>' +
-      '<input type="search" id="q" placeholder="翻找旧页…" autocomplete="off" value="' + esc(kw || '') + '">' +
-      (kw ? '<span class="search-count">' + shown.length + ' 条</span>' : '') +
-    '</div>' +
-    '<div class="index-list">';
-
+  let html = '<div class="index-list">';
   for (let i = 0; i < slice.length; i++) {
     const e = slice[i];
-    const isLatest = !kw && start === 0 && i === 0;   // 仅首页、未搜索时突出最新
+    const isLatest = !terms.length && start === 0 && i === 0;
+    const snip = makeSnippet(e, terms);
     html +=
       '<a class="entry' + (isLatest ? ' entry-latest' : '') + '" href="#/' + e.id + '">' +
         '<div class="entry-date">' + fmtDate(e.date) + '<span class="entry-no">' + e.no + '</span></div>' +
         '<div class="entry-body">' +
-          '<div class="entry-title">' + highlight(esc(e.title), kw) + (isLatest ? '<span class="badge-new">最新</span>' : '') + '</div>' +
-          (e.excerpt ? '<div class="entry-excerpt">' + highlight(esc(e.excerpt), kw) + '…</div>' : '') +
+          '<div class="entry-title">' + highlightTerms(esc(e.title), terms) +
+            (isLatest ? '<span class="badge-new">最新</span>' : '') + '</div>' +
+          (snip ? '<div class="entry-excerpt">' + highlightTerms(esc(snip), terms) + '</div>' : '') +
         '</div>' +
       '</a>';
   }
@@ -370,30 +434,17 @@ let html =
         '<button id="pgNext"' + (page >= totalPages ? ' disabled' : '') + '>后一页 →</button>' +
       '</nav>';
   }
+  html += '<div class="empty"' + (total ? ' style="display:none"' : '') + '>没有找到这一页</div>';
 
-  html += '<div class="empty" id="empty" style="display:' + (shown.length ? 'none' : 'block') + '">没有找到这一页</div>';
+  $('result').innerHTML = html;
 
-  /* ── 焦点保护：重渲染前记录输入框焦点状态和光标位置 ── */
-  const oldQ = document.getElementById('q');
-  const wasFocused = !!(oldQ && document.activeElement === oldQ);
-  const selStart = wasFocused ? oldQ.selectionStart : null;
-  const selEnd   = wasFocused ? oldQ.selectionEnd   : null;
+  const count = $('searchCount');
+  if (terms.length) { count.hidden = false; count.textContent = total + ' 条'; }
+  else { count.hidden = true; count.textContent = ''; }
 
-  $('view').innerHTML = html;
-
-  /* ── 渲染后恢复焦点 ── */
-  if (wasFocused) {
-    const input = $('q');
-    if (input) {
-      input.focus();
-      try { input.setSelectionRange(selStart, selEnd); } catch (e) {}
-    }
-  }
-
-  /* ── 分页按钮（每次渲染后重新绑定）── */
   const pgPrev = $('pgPrev'), pgNext = $('pgNext');
-  if (pgPrev) pgPrev.onclick = () => { showIndex(kw, page - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  if (pgNext) pgNext.onclick = () => { showIndex(kw, page + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  if (pgPrev) pgPrev.onclick = () => { showIndex(raw, page - 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  if (pgNext) pgNext.onclick = () => { showIndex(raw, page + 1); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 }
 
 
