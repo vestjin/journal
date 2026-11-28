@@ -439,6 +439,16 @@ function showPost(id) {
     '</article>';
 
   $('view').querySelectorAll('.post-body img').forEach(img => {
+    /* —— 修正相对 /journal/ 的路径 —— */
+    const raw = img.getAttribute('src') || '';
+    if (raw && !/^(https?:)?\/\//.test(raw) && !raw.startsWith('data:')) {
+      let s = raw.replace(/^(?:\.\.?\/)+/, '');          // 去 ./ ../
+      if (s.startsWith('/')) {                            // /pic/ → /journal/pic/
+        const base = location.pathname.replace(/[^/]*$/, '').replace(/\/$/, '');
+        s = base + s;
+      }
+      img.setAttribute('src', s);
+    }
     img.style.cursor = 'zoom-in';
     img.onerror = () => {
       const d = document.createElement('div');
