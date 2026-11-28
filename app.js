@@ -67,41 +67,64 @@ function inline(s) {
     .replace(/==([^=\n]+)==/g, '<mark>$1</mark>');
 }
 
-function renderMD(src) {
+function renderMD(src, ctx) {
   const FENCE = '\u0060\u0060\u0060';
-  const blocks = [];
+  ctx = ctx || {};
+  const blocks = ctx.blocks || (ctx.blocks = []);
+  const htmls  = ctx.htmls  || (ctx.htmls  = []);   // ← 关键：声明 htmls
+
+  /* 1. 围栏代码块 */
   const rx = new RegExp(FENCE + '[^\\n]*\\n([\\s\\S]*?)' + FENCE, 'g');
   src = src.replace(rx, (m, code) => {
     blocks.push(code);
     return '\u0000CODE' + (blocks.length - 1) + '\u0000';
   });
 
-  // 新增：将 ![]() 自动转为 <figure> 结构
-  src = src.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (match, alt, srcUrl) => {
-    const imgSrc = srcUrl.replace(/^\.\.?\//, '');
-    const caption = inline(esc(alt));   // 允许图注内有加粗等行内格式
-    const figureHtml = '<figure><img src="' + imgSrc + '" alt="' + esc(alt) + '" loading="lazy" decoding="async" referrerpolicy="no-referrer"><figcaption>' + caption + '</figcaption></figure>';
-    htmls.push(figureHtml);
-    return '\u0000HTML' + (htmls.length - 1) + '\u0000';
-  });
-
-
-  /* ── <details>：内部内容递归渲染 ── */
+  /* 2. <details>：递归渲染内部，共享 blocks/htmls */
   src = src.replace(/<details>([\s\S]*?)<\/details>/gi, (m, inner) => {
     const sumM = inner.match(/<summary>([\s\S]*?)<\/summary>/i);
     const body = inner.replace(/<summary>[\s\S]*?<\/summary>/i, '');
     const sum = sumM ? esc(sumM[1].trim()) : '展开';
-    htmls.push('<details><summary>' + sum + '</summary>' + renderMD(body.trim()) + '</details>');
+    const innerHTML = renderMD(body.trim(), ctx);
+    htmls.push('<details><summary>' + sum + '</summary>' + innerHTML + '</details>');
+    return '\u0000HTML' + (htmls.length - 1) + '\u0000';
+  });
+
+  /* 3. 原生 <figure>…</figure>：模板「本周图记」的写法 */
+  src = src.replace(/<figure\b[\s\S]*?<\/figure>/gi, m => {
+    htmls.push(m);
+    return '\u0000HTML' + (htmls.length - 1) + '\u0000';
+  });
+
+  /* 4. Markdown 图片 ![alt](url) → <figure> */
+  src = src.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (match, alt, srcUrl) => {
+    const imgSrc = srcUrl.replace(/^\.\.?\//, '');
+    const caption = alt ? '<figcaption>' + inline(esc(alt)) + '</figcaption>' : '';
+    const figureHtml =
+      '<figure>' +
+        '<img src="' + esc(imgSrc) + '" alt="' + esc(alt) + '" ' +
+        'loading="lazy" decoding="async" referrerpolicy="no-referrer">' +
+        caption +
+      '</figure>';
+    htmls.push(figureHtml);
     return '\u0000HTML' + (htmls.length - 1) + '\u0000';
   });
 
   const lines = esc(src).split('\n');
   let out = '';
-  let stack = [];      /* 列表栈：{tag, indent, inject} */
+  let stack = [];
   let quote = false;
   let para = [];
 
-  const flushPara = () => { if (para.length) { out += '<p>' + inline(para.join('<br>')) + '</p>'; para = []; } };
+  const flushPara = () => {
+    if (para.length) {
+      // 先 inline 处理普通文本，再展开行内图片占位符
+      let text = inline(para.join('<br>'));
+      text = text.replace(/\u0000HTML(\d+)\u0000/g, (m, i) => htmls[+i]);
+      out += '<p>' + text + '</p>';
+      para = [];
+    }
+  };
   const closeQuote = () => { if (quote) { out += '</blockquote>'; quote = false; } };
   const closeLists = n => {
     while (stack.length > n) {
@@ -116,18 +139,15 @@ function renderMD(src) {
     const line = lines[i];
     const t = line.trim();
 
-    /* 代码块占位 */
     const codeM = line.match(/^\u0000CODE(\d+)\u0000\s*$/);
     if (codeM) { flushAll(); out += '<pre><code>' + esc(blocks[+codeM[1]]) + '</code></pre>'; continue; }
-    /* HTML 占位（figure / details） */
+
     const htmlM = line.match(/^\u0000HTML(\d+)\u0000\s*$/);
     if (htmlM) { flushAll(); out += htmls[+htmlM[1]]; continue; }
 
-    /* 标题：1–4 级 */
     const h = t.match(/^(#{1,4})\s+(.*)/);
     if (h) { flushAll(); out += '<h' + h[1].length + '>' + inline(h[2]) + '</h' + h[1].length + '>'; continue; }
 
-    /* 分隔线 */
     if (/^(-{3,}|\*{3,})$/.test(t)) { flushAll(); out += '<hr>'; continue; }
 
     /* 表格：当前行含 |，下一行是 |---|---| 分隔行 */
