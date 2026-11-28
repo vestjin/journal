@@ -629,10 +629,8 @@ article.post { animation: fadein .3s ease; }
 
 /* 任务清单：勾选框换成朱砂色 */
 .post-body input[type="checkbox"] { accent-color: var(--seal); margin-right: .45em; }
-.post-body li:has(> input[type="checkbox"]) { list-style: none; padding-left: .2em; }
-.post-body li:has(> input[type="checkbox"])::before { content: none; }
+.post-body li.task { list-style: none; padding-left: .2em; }
 .post-body li.task::before { content: none; }
-.post-body li.task { padding-left: .2em; }
 
 /* hr：居中花饰 */
 .post-body hr {
@@ -794,26 +792,9 @@ footer.colophon {
   background-size:400% 100%;animation:sk 1.2s ease-in-out infinite}
 .sk-row.short{width:50%}
 @keyframes sk{0%{background-position:100% 50%}100%{background-position:0 50%}}
-.search{position:relative}
 .search .search-count{font-size:12px;color:var(--ink-3,#888);white-space:nowrap;margin-left:4px}
-.search mark,.entry-title mark,.entry-excerpt mark{background:#ffe9a8;color:inherit;padding:0 2px;border-radius:2px}
-figure {
-  margin: 1.5em 0;
-  text-align: center;
-}
-
-figure img {
-  max-width: 100%;
-  display: block;
-  margin: 0 auto;
-}
-
-figure figcaption {
-  font-size: 0.85em;
-  color: #666;
-  margin-top: 0.5em;
-  text-align: center;
-}
+.entry-title mark,
+.entry-excerpt mark { background: #ffe9a8; color: inherit; padding: 0 2px; border-radius: 2px; }
 .pg-info {
   display: inline-flex;
   align-items: center;
